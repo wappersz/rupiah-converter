@@ -71,7 +71,7 @@ button:active { background: var(--key-down); transition: none; }
 button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
 button.fn { background: var(--fn); }
 button.fn:active { background: var(--fn-down); }
-button.wide { grid-column: span 2; aspect-ratio: auto; }
+button.wide { grid-column: span 2; aspect-ratio: auto; height: calc((var(--w) - var(--w) * 0.105) / 4); }
 button.zero { justify-content: flex-start; padding-left: calc(var(--w) * 0.085); }
 button.go { background: var(--orange); font-size: calc(var(--w) * 0.065); font-weight: 500; }
 button.go:active { background: var(--orange-down); }
