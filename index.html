@@ -94,7 +94,7 @@ button.live:active { background: none; opacity: .5; }
 
 <div class="app">
   <div class="display">
-    <div class="tag">Rupiah amount</div>
+    <div class="tag">Type rupiah amount here</div>
     <div class="line">
       <div class="amt" id="idr" aria-label="Amount in rupiah">0</div>
       <div class="cur" aria-hidden="true">Rp</div>
@@ -148,7 +148,7 @@ button.live:active { background: none; opacity: .5; }
   }
 
   function showIdr() {
-    idrEl.textContent = digits ? fmt(Number(digits)) : 'Type the rupiah on the keys below ↓';
+    idrEl.textContent = digits ? fmt(Number(digits)) : 'Tap the numbers below ↓';
     idrEl.classList.toggle('placeholder', !digits);
     fit(idrEl);
   }
