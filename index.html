@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rp → £">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-512.png">
+<title>Rupiah to Pounds</title>
+<style>
+/* Layout: iOS calculator. Display (Rp line, then big £ line) sits on top of a 4x5 grid of identical round keys. One orange key: Convert. */
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --muted: #8e8e93;
+  --key: #333333;
+  --key-down: #737373;
+  --fn: #5c5c5f;
+  --fn-down: #8e8e93;
+  --orange: #ff9f0a;
+  --orange-down: #fcc78a;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; background: var(--bg); }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+.app {
+  --w: min(100vw - 32px, 400px, 54vh);
+  width: var(--w); min-height: 100%; margin: 0 auto; box-sizing: border-box;
+  padding-block: 16px 24px; display: flex; flex-direction: column; gap: 16px;
+}
+
+/* Display */
+.display { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding-inline: 8px; }
+.line { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; }
+.cur {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 14px; font-weight: 600;
+  background: var(--fn); color: var(--fg);
+}
+.amt {
+  min-width: 0; white-space: nowrap; overflow: hidden; text-align: right;
+  font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.1;
+}
+#idr { font-size: calc(var(--w) * 0.1); color: var(--fg); }
+#gbp { font-size: calc(var(--w) * 0.22); }
+#gbp.empty { color: var(--muted); }
+
+/* Keypad: every key is the same circle; 0 and Convert are the same pill */
+.keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--w) * 0.035); }
+button {
+  font: inherit; border: 0; padding: 0; color: var(--fg); background: var(--key);
+  aspect-ratio: 1; border-radius: 999px; cursor: pointer; touch-action: manipulation;
+  font-size: calc(var(--w) * 0.09); font-weight: 400;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .3s ease-out;
+}
+button.txt { font-size: calc(var(--w) * 0.065); }
+button:active { background: var(--key-down); transition: none; }
+button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+button.fn { background: var(--fn); }
+button.fn:active { background: var(--fn-down); }
+button.wide { grid-column: span 2; aspect-ratio: auto; }
+button.zero { justify-content: flex-start; padding-left: calc(var(--w) * 0.085); }
+button.go { background: var(--orange); font-size: calc(var(--w) * 0.065); font-weight: 500; }
+button.go:active { background: var(--orange-down); }
+button svg { width: 38%; height: 38%; }
+
+/* Rate */
+.rate { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.rate input {
+  width: 64px; background: transparent; color: var(--fg); border: 0; border-bottom: 1px solid var(--fn);
+  padding: 2px 0; font: inherit; text-align: center; font-variant-numeric: tabular-nums;
+}
+.rate input:focus { outline: none; border-bottom-color: var(--orange); }
+.rate button { aspect-ratio: auto; background: none; color: var(--orange); font-size: 13px; padding: 4px 6px; }
+.rate button:active { background: none; opacity: .5; }
+button.live { align-self: center; aspect-ratio: auto; background: none; color: var(--orange); font-size: 13px; padding: 4px 8px; margin-top: -10px; }
+button.live:active { background: none; opacity: .5; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="display">
+    <div class="line">
+      <div class="amt" id="idr" aria-label="Amount in rupiah">0</div>
+      <div class="cur" aria-hidden="true">Rp</div>
+    </div>
+    <div class="line">
+      <div class="amt empty" id="gbp" aria-live="polite">0</div>
+      <div class="cur" aria-hidden="true">£</div>
+    </div>
+  </div>
+
+  <div class="keys">
+    <button class="fn txt" id="k-clear">AC</button>
+    <button class="fn" id="k-back" aria-label="Delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M8.5 5H20a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H8.5L2.5 12z"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5"/></svg>
+    </button>
+    <button class="fn txt" data-set="100000">100k</button>
+    <button class="fn txt" data-set="1000000">1M</button>
+    <button>7</button><button>8</button><button>9</button><button class="txt">000</button>
+    <button>4</button><button>5</button><button>6</button><button class="txt">00</button>
+    <button>1</button><button>2</button><button>3</button><button class="txt" data-set="50000">50k</button>
+    <button class="wide zero">0</button>
+    <button class="wide go" id="k-convert">Convert</button>
+  </div>
+
+  <label class="rate" for="rate">£1 =
+    <input id="rate" inputmode="decimal" autocomplete="off"> IDR
+    <button type="button" id="k-reset">Reset</button>
+  </label>
+  <button type="button" class="live" id="k-live">Get latest rate</button>
+</div>
+
+<script>
+(() => {
+  const DEFAULT_RATE = 24180; // mid-market, 13 Nov 2026
+  const KEY = 'idr-rate-v2';
+  const MAX_DIGITS = 12;
+  const $ = id => document.getElementById(id);
+  const idrEl = $('idr'), gbpEl = $('gbp'), rateEl = $('rate');
+
+  let digits = '';
+  let rate = DEFAULT_RATE;
+  try { const r = parseFloat(localStorage.getItem(KEY)); if (r > 0) rate = r; } catch (e) {}
+
+  const fmt = (n, dp = 0) => n.toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+  // Shrink text to fit, like the iOS display does
+  function fit(el) {
+    el.style.transform = '';
+    const over = el.scrollWidth / el.clientWidth;
+    if (over > 1) { el.style.transformOrigin = 'right center'; el.style.transform = `scale(${1 / over})`; }
+  }
+
+  function showIdr() {
+    idrEl.textContent = digits ? fmt(Number(digits)) : '0';
+    fit(idrEl);
+  }
+  function clearGbp() {
+    gbpEl.textContent = '0'; gbpEl.classList.add('empty'); fit(gbpEl);
+  }
+  function convert() {
+    const gbp = Number(digits || 0) / rate;
+    gbpEl.textContent = fmt(gbp, gbp >= 1000 ? 0 : 2);
+    gbpEl.classList.toggle('empty', !digits);
+    fit(gbpEl);
+  }
+  function type(s) {
+    if (!digits && /^0+$/.test(s)) return;
+    if ((digits + s).length > MAX_DIGITS) return;
+    digits += s; showIdr(); clearGbp();
+  }
+  function showRate() { rateEl.value = fmt(rate); }
+
+  document.querySelectorAll('.keys button').forEach(b => {
+    const label = b.textContent.trim();
+    if (b.dataset.set) b.addEventListener('click', () => { digits = b.dataset.set; showIdr(); convert(); });
+    else if (/^\d+$/.test(label)) b.addEventListener('click', () => type(label));
+  });
+  $('k-clear').onclick = () => { digits = ''; showIdr(); clearGbp(); };
+  $('k-back').onclick = () => { digits = digits.slice(0, -1); showIdr(); clearGbp(); };
+  $('k-convert').onclick = convert;
+
+  rateEl.addEventListener('change', () => {
+    const r = parseFloat(rateEl.value.replace(/[^\d.]/g, ''));
+    if (r > 0) { rate = r; try { localStorage.setItem(KEY, String(r)); } catch (e) {} }
+    showRate(); if (digits) convert();
+  });
+  $('k-reset').onclick = () => {
+    live.textContent = 'Get latest rate';
+    rate = DEFAULT_RATE;
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    showRate(); if (digits) convert();
+  };
+
+  const live = $('k-live');
+  async function getJson(url) {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+  live.onclick = async () => {
+    live.disabled = true; live.textContent = 'Getting rate…';
+    try {
+      let r, when;
+      try {
+        const d = await getJson('https://open.er-api.com/v6/latest/GBP');
+        r = d.rates.IDR; when = new Date(d.time_last_update_unix * 1000);
+      } catch (e) {
+        const d = await getJson('https://api.frankfurter.dev/v1/latest?from=GBP&to=IDR');
+        r = d.rates.IDR; when = new Date(d.date);
+      }
+      if (!(r > 0)) throw new Error('no rate');
+      rate = Math.round(r);
+      try { localStorage.setItem(KEY, String(rate)); } catch (e) {}
+      showRate(); if (digits) convert();
+      live.textContent = 'Updated ' + when.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    } catch (e) {
+      live.textContent = 'No connection. Tap to try again';
+    }
+    live.disabled = false;
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.target === rateEl) return;
+    if (/^\d$/.test(e.key)) type(e.key);
+    else if (e.key === 'Backspace') $('k-back').click();
+    else if (e.key === 'Enter' || e.key === '=') convert();
+    else if (e.key === 'Escape') $('k-clear').click();
+  });
+  addEventListener('resize', () => { fit(idrEl); fit(gbpEl); });
+
+  showRate(); showIdr(); clearGbp();
+})();
+</script>
+</body>
+</html>
