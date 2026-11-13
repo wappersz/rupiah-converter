@@ -54,7 +54,6 @@ body {
 #idr { font-size: calc(var(--w) * 0.1); color: var(--fg); }
 #gbp { font-size: calc(var(--w) * 0.22); }
 #idr.placeholder { color: var(--muted); font-size: calc(var(--w) * 0.065); font-weight: 400; letter-spacing: 0; }
-.tag { text-align: right; color: var(--muted); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding-right: 40px; }
 #gbp.empty { color: var(--muted); }
 
 /* Keypad: every key is the same circle; 0 and Convert are the same pill */
@@ -94,7 +93,6 @@ button.live:active { background: none; opacity: .5; }
 
 <div class="app">
   <div class="display">
-    <div class="tag">Type rupiah amount here</div>
     <div class="line">
       <div class="amt" id="idr" aria-label="Amount in rupiah">0</div>
       <div class="cur" aria-hidden="true">Rp</div>
@@ -148,7 +146,7 @@ button.live:active { background: none; opacity: .5; }
   }
 
   function showIdr() {
-    idrEl.textContent = digits ? fmt(Number(digits)) : 'Tap the numbers below ↓';
+    idrEl.textContent = digits ? fmt(Number(digits)) : 'Type your rupiah amount here';
     idrEl.classList.toggle('placeholder', !digits);
     fit(idrEl);
   }
